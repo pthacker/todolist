@@ -19,22 +19,23 @@
 //         }
 //     ]
 // }
+// newNote = {
+//     noteId:'noteID-'+Math.random(),
+//     todos:[
+//         {
+//             todoId:'todoID-'+Math.random(),
+//             todoItem:notesText
+//         }
+//     ]
+
+// }
 
 
 // ]
 
 
 export const setDataInStore = (key,value)=>{
-    // const existingData =JSON.parse(localStorage.getItem(key));
-    // if(existingData){
-    //     // pull exiting data
-    //     const oldData = [...existingData];
-
-    //     // create a new copy
-    //     // store the data
-    // }else{
         localStorage.setItem(key,JSON.stringify(value))
-    // }
 }
 
 export const getDataFromStore = (key)=>{

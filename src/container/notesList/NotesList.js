@@ -1,138 +1,238 @@
 import React, { useState, useEffect } from "react";
 import inputBox from "../../components/notes/inputBox";
-import { getDataFromStore,setDataInStore} from '../../service/localStorage';
+import { getDataFromStore, setDataInStore } from "../../service/localStorage";
+import "./notesList.css";
 const NotesList = () => {
-  const [notesList, setNotesList] = useState([
-
-
-  ]);
+  const [notesList, setNotesList] = useState([]);
   const [notesText, setNotesText] = useState("");
+  // this will store the current noteid,todoId getting edited
+  const [editingObj, setEditingObj] = useState({
+    noteId: null,
+    todoId: null,
+  });
+  const [editingText,setEditingText] = useState('');
+
+  useEffect(() => {
+    // grab data from local storage and setState
+    const dataFromStore = getDataFromStore("notesList");
+    if (dataFromStore && dataFromStore.length > 0) {
+      setNotesList(dataFromStore);
+    }
+  }, []);
+
+  useEffect(()=>{
+    setDataInStore("notesList",notesList)
+  },[notesList])
 
   const handleInputChange = (e) => {
     setNotesText(e.target.value);
   };
 
-  const handleAddToDo = (noteid)=>{
 
-    const newTodo = {
-            todoId:'todoID-'+Math.random(),
-            todoItem:''
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const newNoteObj = {
+      noteId: "noteID-" + Math.random(),
+      todos: [
+        {
+          todoId: "todoID-" + Math.random(),
+          todoItem: notesText,
+          checked: false,
+        },
+      ],
+    };
+
+    setNotesList((prevState) => {
+      return [...prevState].concat(newNoteObj);
+    });
+    setNotesText("");
+  };
+
+  const handleDeleteNote = (noteIdToDel) => {
+    const updatedNoteList = notesList.filter(
+      (singleNote) => singleNote.noteId !== noteIdToDel
+    );
+    setNotesList(updatedNoteList);
+  };
+
+  const toggleComplete = (noteIdToggle, todoIdToggle) => {
+    const oldNotesList = [...notesList];
+    let noteObjIndex, oldNoteObj, todoObjIndex, oldtodoListObj;
+    noteObjIndex = oldNotesList.findIndex(
+      (singleNote) => singleNote.noteId === noteIdToggle
+    );
+    console.log("note index", noteObjIndex);
+    if (noteObjIndex || noteObjIndex === 0) {
+      // grab old note obj
+      oldNoteObj = oldNotesList[noteObjIndex];
+      console.log("notes obj", oldNoteObj);
     }
-    // fetch from noteid
-    const exisitngList = [...notesList];
-    const indexOfNote = exisitngList.findIndex((noteObj=>noteObj.noteId===noteid))
-    const exisitngNoteObj = exisitngList[indexOfNote];
-    // append the new todo
-    exisitngNoteObj?.todos?.push(newTodo)
-   setNotesList(exisitngList);
-   setDataInStore(exisitngList);
-    
-  }
-
-  const handleAddNote = ()=>{
-    let newNote = {}
-    console.log('handleAddNote')
-    if(notesList.length > 0){
-        // fetch exisitng data
-        const existingData = [...notesList];
-        newNote = {
-            noteId:'noteID-'+Math.random(),
-            todos:[
-                {
-                    todoId:'todoID-'+Math.random(),
-                    todoItem:notesText
-                }
-            ]
-
-        }
-        existingData.push(newNote)
-        setNotesList(existingData)
-        setDataInStore('notesList',existingData)
-        console.log('handleAddNote if ',notesList)
-    }else{
-        console.log('handleAddNote else ')
-        // add new data
-        newNote = {
-            noteId:'noteID-'+Math.random(),
-            todos:[
-                {
-                    todoId:'todoID-'+Math.random(),
-                    todoItem:notesText
-                }
-            ]
-
-        }
-        const newNotes = []
-        newNotes.push(newNote);
-        setDataInStore('notesList',newNotes)
-        setNotesList(newNotes);
+    todoObjIndex = oldNoteObj.todos.findIndex(
+      (singleTodo) => singleTodo.todoId === todoIdToggle
+    );
+    console.log("todo index", todoObjIndex);
+    if (todoObjIndex || todoObjIndex === 0) {
+      // grab old todo
+      oldtodoListObj = oldNoteObj.todos[todoObjIndex];
+      console.log("todo obj", oldtodoListObj);
     }
 
-    // add new note to localstorage
-//     setNotesList((prevState)=>{
+    // change the todo checked:true
+    oldtodoListObj.checked = !oldtodoListObj.checked;
 
-//         return{
-//             ...prevState,
-//             noteId:'noteID-'+Math.random()
-//         }
-//     })
-setNotesText('')
+    // change todo object inside noteobj
+    oldNoteObj[todoObjIndex] = { ...oldtodoListObj };
+
+    // change note object inside notelist
+    oldNotesList[noteObjIndex] = { ...oldNoteObj };
+
+    setNotesList([...oldNotesList]);
+  };
+
+  const handleEditButton = (noteidEdit, todoIdEdit) => {
+    setEditingObj({
+      noteId: noteidEdit,
+      todoId: todoIdEdit,
+    });
+  };
+
+  const handleEditingText = (e)=>{
+      setEditingText(e.target.value)
   }
 
-  useEffect(() => {
-    // grab data from local storage and setState
-    const dataFromStore = getDataFromStore('notesList');
-    if(dataFromStore && dataFromStore.length > 0){
-        setNotesList(dataFromStore)
-    }  
-  },[]);
+  const  handleSubmitEdit = (noteIdSubmit,todoIdSubmit)=>{
+    const oldNotesList = [...notesList];
+    let noteObjIndex, oldNoteObj, todoObjIndex, oldtodoListObj;
+    noteObjIndex = oldNotesList.findIndex(
+      (singleNote) => singleNote.noteId === noteIdSubmit
+    );
+    console.log("note index", noteObjIndex);
+    if (noteObjIndex || noteObjIndex === 0) {
+      // grab old note obj
+      oldNoteObj = oldNotesList[noteObjIndex];
+      console.log("notes obj", oldNoteObj);
+    }
+    todoObjIndex = oldNoteObj.todos.findIndex(
+      (singleTodo) => singleTodo.todoId === todoIdSubmit
+    );
+    console.log("todo index", todoObjIndex);
+    if (todoObjIndex || todoObjIndex === 0) {
+      // grab old todo
+      oldtodoListObj = oldNoteObj.todos[todoObjIndex];
+      console.log("todo obj", oldtodoListObj);
+    }
 
-  console.log(notesList)
+    // change the todo item to edited value
+    oldtodoListObj.todoItem = editingText;
+
+    // change todo object inside noteobj
+    oldNoteObj[todoObjIndex] = { ...oldtodoListObj };
+
+    // change note object inside notelist
+    oldNotesList[noteObjIndex] = { ...oldNoteObj };
+
+    setNotesList([...oldNotesList]);
+    setEditingObj({
+    noteId: null,
+    todoId: null,
+    })
+    setEditingText('')
+  }
+
+
+  const handleAddToDo = (noteIdAddTodo)=>{
+    const oldNotesList = [...notesList];
+    let noteObjIndex, oldNoteObj;
+    noteObjIndex = oldNotesList.findIndex(
+      (singleNote) => singleNote.noteId === noteIdAddTodo
+    );
+    console.log("note index", noteObjIndex);
+    if (noteObjIndex || noteObjIndex === 0) {
+      // grab old note obj
+      oldNoteObj = oldNotesList[noteObjIndex];
+      console.log("notes obj", oldNoteObj);
+    }
+    const newTodoObj = {
+            todoId: "todoID-" + Math.random(),
+            todoItem: '',
+            checked: false,
+      };
+    const newTodoList = [...oldNoteObj.todos].concat(newTodoObj);
+    oldNoteObj.todos = newTodoList;
+    oldNotesList[noteObjIndex] = {...oldNoteObj};
+    setNotesList([...oldNotesList]);
+  }
+
+  console.log(notesList);
   return (
     <div className="container">
-      {/* <inputBox
-        value={notesText}
-        name={"notesText"}
-        onChangeInput={handleInputChange}
-      /> */}
-      <input
-        value={notesText}
-        name={"notesText"}
-        onChange={handleInputChange}
-      />
-      <button onClick={handleAddNote}>Add note</button>
-
+      <form onSubmit={handleSubmit}>
+        <input type="text" onChange={handleInputChange} value={notesText} />
+        <button type="submit">Add Todo</button>
+      </form>
       <div
-      style={{
-        display:"flex",
-        width:'100%',
-        height:'100%',
-      }}
+        className="notesListContainer"
       >
-          {notesList.length>0 && notesList.map(singleNote=>{
-              return(
-                  <div key={singleNote.noteId} style={{
-                    display:"flex",
-                    width:'15rem',
-                    height:'15rem',
-                    background:'blue',
-                    margin:'1rem',
-                    flexDirection:'column'
-                  }}>
-                      {singleNote.todos.length>0 && singleNote.todos.map((singleTodo=>{
-                          return(
-                              <input style={{
-                                  height:'10px'
-                              }} key={singleTodo.todoId} value={singleTodo.todoItem}/>
-                          )
-                      }))}
-                      <button style={{
-                          height:'25px'
-                      }}
-                      onClick={()=>handleAddToDo(singleNote.noteId)}
-                      >Add</button>
+        {notesList.length > 0 &&
+          notesList.map((singleNote) => {
+            return (
+              <div
+                className="singleNoteBlock"
+                key={singleNote.noteId}
+              >
+                  <div className="button_container">
+                  <button
+                  className="delete_button"
+                  onClick={() => handleDeleteNote(singleNote.noteId)}
+                >
+                  x
+                </button>
                   </div>
-              )
+                {singleNote.todos.map((singleTodo) => {
+                  return (
+                    <div className="todo" key={singleTodo.todoId}>
+                      {editingObj.noteId === singleNote.noteId &&
+                      editingObj.todoId === singleTodo.todoId ? (
+                        <input value={editingText} onChange={handleEditingText} />
+                      ) : (
+                        singleTodo.todoItem
+                      )}
+                      <input
+                        type="checkbox"
+                        onChange={() =>
+                          toggleComplete(singleNote.noteId, singleTodo.todoId)
+                        }
+                        checked={singleTodo.checked}
+                      />
+                      {editingObj.noteId === singleNote.noteId &&
+                      editingObj.todoId === singleTodo.todoId ? (
+                        <button
+                        onClick={() =>
+                          handleSubmitEdit(singleNote.noteId, singleTodo.todoId)
+                        }
+                      >
+                        Submit
+                      </button>
+                      ) :(
+                        <button
+                        onClick={() =>
+                          handleEditButton(singleNote.noteId, singleTodo.todoId)
+                        }
+                      >
+                        Edit
+                      </button>
+                      )
+                    
+                    }
+
+                    </div>
+                  );
+                })}
+                <button onClick={()=>handleAddToDo(singleNote.noteId)}>Add TODO</button>
+
+              </div>
+            );
           })}
       </div>
     </div>
